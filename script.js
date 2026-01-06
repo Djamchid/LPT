@@ -13,16 +13,29 @@ function generateTableOfContents() {
 
     sections.forEach(section => {
         const sectionId = section.getAttribute('id');
-        const headings = section.querySelectorAll('h2, h3');
+        // Skip sections without IDs or empty IDs
+        if (!sectionId) return;
+
+        const headings = section.querySelectorAll('h1, h2, h3');
 
         headings.forEach(heading => {
             const link = document.createElement('a');
             const headingText = heading.textContent;
-            const headingId = sectionId + '-' + headingText.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-            // Set ID for the heading if not already set
+            // If the heading doesn't have an ID, create one
             if (!heading.id) {
-                heading.id = headingId;
+                // For the first h2 in a section, use the section ID directly
+                const isFirstH2 = heading.tagName === 'H2' &&
+                                 section.querySelectorAll('h2').length === 1;
+
+                if (isFirstH2) {
+                    heading.id = sectionId;
+                } else {
+                    // For other headings, generate a unique ID
+                    heading.id = sectionId + '-' + headingText.toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-+|-+$/g, '');
+                }
             }
 
             link.href = '#' + heading.id;
@@ -31,6 +44,8 @@ function generateTableOfContents() {
             // Add class based on heading level
             if (heading.tagName === 'H3') {
                 link.classList.add('toc-level-3');
+            } else if (heading.tagName === 'H1') {
+                link.classList.add('toc-level-1');
             }
 
             tocNav.appendChild(link);
@@ -41,7 +56,7 @@ function generateTableOfContents() {
 // Scroll spy - highlight current section in TOC
 function initializeScrollSpy() {
     const tocLinks = document.querySelectorAll('#toc-nav a');
-    const sections = document.querySelectorAll('.section h2, .section h3');
+    const sections = document.querySelectorAll('.section h1, .section h2, .section h3');
 
     function updateActiveLink() {
         let currentSection = null;
